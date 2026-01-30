@@ -94,7 +94,7 @@ export function useAudioPlayer() {
           // Fallback to direct file path (may not work due to CORS)
           audioRef.current!.src = currentTrack.path;
         }
-
+        console.log(currentTrack, ";");
         audioRef.current!.load();
         setPlaying(true);
       } catch (error) {

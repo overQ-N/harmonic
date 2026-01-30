@@ -6,6 +6,9 @@ export interface AudioFile {
   name: string;
   size: number;
   extension: string;
+  cover?: string; // Base64编码的封面图片
+  artist?: string;
+  album?: string;
 }
 
 interface AudioState {

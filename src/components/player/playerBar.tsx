@@ -1,8 +1,19 @@
-import { Play, Pause, SkipBack, SkipForward, Volume2, Repeat, Shuffle } from "lucide-react";
+import {
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
+  Volume2,
+  Repeat,
+  Shuffle,
+  Monitor,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useAudioStore } from "@/stores/audioStore";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
+import { useState, useEffect } from "react";
+import { Window } from "@tauri-apps/api/window";
 
 export function PlayerBar() {
   const {
@@ -21,6 +32,46 @@ export function PlayerBar() {
     prevTrack,
   } = useAudioStore();
   const { seek } = useAudioPlayer();
+
+  const [lyricsWindowVisible, setLyricsWindowVisible] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    const init = async () => {
+      try {
+        const lyricsWindow = await Window.getByLabel("lyrics");
+        if (lyricsWindow && mounted) {
+          const visible = await lyricsWindow.isVisible();
+          setLyricsWindowVisible(visible);
+        }
+      } catch (error) {
+        console.error("Failed to get lyrics window:", error);
+      }
+    };
+    init();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const toggleLyricsWindow = async () => {
+    try {
+      const lyricsWindow = await Window.getByLabel("lyrics");
+      console.log(lyricsWindow, "===");
+      if (lyricsWindow) {
+        const visible = await lyricsWindow.isVisible();
+        if (visible) {
+          await lyricsWindow.hide();
+          setLyricsWindowVisible(false);
+        } else {
+          await lyricsWindow.show();
+          setLyricsWindowVisible(true);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to toggle lyrics window:", error);
+    }
+  };
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -42,11 +93,11 @@ export function PlayerBar() {
     repeatMode === "off" ? "Repeat off" : repeatMode === "one" ? "Repeat one" : "Repeat all";
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 h-20 bg-background border-t border-border flex items-center justify-between px-6">
+    <div className="fixed bottom-0 left-0 right-0 flex items-center justify-between h-20 px-6 border-t bg-background border-border">
       {/* Current Track Info */}
-      <div className="flex items-center gap-4 w-64">
-        <div className="h-14 w-14 bg-muted rounded-md flex items-center justify-center">
-          <div className="h-10 w-10 bg-primary/20 rounded" />
+      <div className="flex items-center w-64 gap-4">
+        <div className="flex items-center justify-center rounded-md h-14 w-14 bg-muted">
+          <div className="w-10 h-10 rounded bg-primary/20" />
         </div>
         <div className="flex flex-col">
           <span className="font-medium text-foreground">
@@ -69,16 +120,16 @@ export function PlayerBar() {
             className={`h-8 w-8 ${shuffle ? "text-primary" : ""}`}
             onClick={toggleShuffle}
           >
-            <Shuffle className="h-4 w-4" />
+            <Shuffle className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={prevTrack}>
-            <SkipBack className="h-4 w-4" />
+          <Button variant="ghost" size="icon" className="w-8 h-8" onClick={prevTrack}>
+            <SkipBack className="w-4 h-4" />
           </Button>
-          <Button size="icon" className="h-10 w-10 rounded-full" onClick={togglePlay}>
-            {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
+          <Button size="icon" className="w-10 h-10 rounded-full" onClick={togglePlay}>
+            {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="h-5 w-5 ml-0.5" />}
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={nextTrack}>
-            <SkipForward className="h-4 w-4" />
+          <Button variant="ghost" size="icon" className="w-8 h-8" onClick={nextTrack}>
+            <SkipForward className="w-4 h-4" />
           </Button>
           <Button
             variant="ghost"
@@ -91,11 +142,11 @@ export function PlayerBar() {
             }}
             title={repeatLabel}
           >
-            <Repeat className="h-4 w-4" />
+            <Repeat className="w-4 h-4" />
           </Button>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-xs text-muted-foreground w-10 text-right">
+          <span className="w-10 text-xs text-right text-muted-foreground">
             {formatTime(currentTime)}
           </span>
           <Slider
@@ -105,13 +156,13 @@ export function PlayerBar() {
             className="flex-1"
             onValueChange={handleProgressChange}
           />
-          <span className="text-xs text-muted-foreground w-10">{formatTime(duration)}</span>
+          <span className="w-10 text-xs text-muted-foreground">{formatTime(duration)}</span>
         </div>
       </div>
 
       {/* Volume & Extra */}
-      <div className="flex items-center gap-4 w-64 justify-end">
-        <Volume2 className="h-5 w-5 text-muted-foreground" />
+      <div className="flex items-center justify-end w-64 gap-4">
+        <Volume2 className="w-5 h-5 text-muted-foreground" />
         <Slider
           value={[volume]}
           max={100}
@@ -119,6 +170,15 @@ export function PlayerBar() {
           className="w-24"
           onValueChange={handleVolumeChange}
         />
+        <Button
+          variant="ghost"
+          size="icon"
+          className={`h-8 w-8 ${lyricsWindowVisible ? "text-primary" : ""}`}
+          onClick={toggleLyricsWindow}
+          title={lyricsWindowVisible ? "隐藏桌面歌词" : "显示桌面歌词"}
+        >
+          <Monitor className="w-4 h-4" />
+        </Button>
       </div>
     </div>
   );
