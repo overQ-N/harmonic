@@ -58,15 +58,6 @@ function App() {
               <PlaylistList />
             </div>
             <div className="space-y-6">
-              <div className="p-6 border rounded-lg bg-muted/50 border-border">
-                <h2 className="flex items-center gap-2 mb-4 text-xl font-semibold">
-                  <Music className="w-5 h-5" />
-                  歌词
-                </h2>
-                <div className="h-[500px]">
-                  <LyricsDisplay />
-                </div>
-              </div>
               <div className="p-6 border rounded-lg bg-primary/5 border-primary/20">
                 <h2 className="flex items-center gap-2 mb-4 text-xl font-semibold">
                   <Music className="w-5 h-5" />

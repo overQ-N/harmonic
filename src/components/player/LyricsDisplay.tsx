@@ -63,7 +63,7 @@ export function LyricsDisplay() {
   return (
     <div
       ref={containerRef}
-      className="relative h-full overflow-y-auto scrollbar-thin scrollbar-thumb-rounded scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent"
+      className="relative h-full overflow-y-auto scrollbar-thin scrollbar-thumb-rounded scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent scrollbar-hide"
     >
       <div className="px-2 py-4 space-y-4">
         {lyrics.map((line, index) => {
@@ -74,7 +74,7 @@ export function LyricsDisplay() {
               ref={isCurrent ? currentLineRef : null}
               className={`
                 text-center transition-all duration-300
-                ${isCurrent ? "text-3xl font-bold text-primary" : "text-xl text-muted-foreground"}
+                ${isCurrent ? "text-3xl font-bold text-white" : "text-xl text-muted-foreground"}
               `}
             >
               {line.text || " "}

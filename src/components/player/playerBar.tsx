@@ -5,15 +5,18 @@ import {
   SkipForward,
   Volume2,
   Repeat,
+  Repeat1,
+  ListVideo,
   Shuffle,
   Monitor,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { AlbumCover } from "@/components/player/AlbumCover";
+import { TrackDetailModal } from "@/components/player/TrackDetailModal";
 import { useAudioStore } from "@/stores/audioStore";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Window } from "@tauri-apps/api/window";
 
 export function PlayerBar() {
@@ -35,6 +38,7 @@ export function PlayerBar() {
   const { seek } = useAudioPlayer();
 
   const [lyricsWindowVisible, setLyricsWindowVisible] = useState(true);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -93,96 +97,114 @@ export function PlayerBar() {
   const repeatLabel =
     repeatMode === "off" ? "Repeat off" : repeatMode === "one" ? "Repeat one" : "Repeat all";
 
+  const modeIcon = useMemo(() => {
+    switch (repeat) {
+      case "one":
+        return <Repeat1 className="w-4 h-4" />;
+      case "all":
+        return <ListVideo className="w-4 h-4" />;
+      default:
+        return <Repeat className="w-4 h-4" />;
+    }
+  }, [repeat]);
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 flex items-center justify-between h-20 px-6 border-t bg-background border-border">
-      {/* Current Track Info */}
-      <div className="flex items-center w-64 gap-4">
-        <AlbumCover
-          cover={currentTrack?.cover}
-          title={currentTrack?.name || "No track"}
-          size="md"
-        />
-        <div className="flex flex-col">
-          <span className="font-medium text-foreground">
-            {currentTrack?.name || "No track selected"}
-          </span>
-          <span className="text-sm text-muted-foreground">
-            {currentTrack
-              ? `${currentTrack.extension.toUpperCase()} • ${formatTime(duration)}`
-              : "—"}
-          </span>
-        </div>
-      </div>
-
-      {/* Playback Controls & Progress */}
-      <div className="flex-1 max-w-2xl">
-        <div className="flex items-center justify-center gap-4 mb-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className={`h-8 w-8 ${shuffle ? "text-primary" : ""}`}
-            onClick={toggleShuffle}
-          >
-            <Shuffle className="w-4 h-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="w-8 h-8" onClick={prevTrack}>
-            <SkipBack className="w-4 h-4" />
-          </Button>
-          <Button size="icon" className="w-10 h-10 rounded-full" onClick={togglePlay}>
-            {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="h-5 w-5 ml-0.5" />}
-          </Button>
-          <Button variant="ghost" size="icon" className="w-8 h-8" onClick={nextTrack}>
-            <SkipForward className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={`h-8 w-8 ${repeat !== "off" ? "text-primary" : ""}`}
-            onClick={() => {
-              const modes: Array<"off" | "one" | "all"> = ["off", "one", "all"];
-              const nextIndex = (modes.indexOf(repeat) + 1) % modes.length;
-              setRepeat(modes[nextIndex]);
-            }}
-            title={repeatLabel}
-          >
-            <Repeat className="w-4 h-4" />
-          </Button>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="w-10 text-xs text-right text-muted-foreground">
-            {formatTime(currentTime)}
-          </span>
-          <Slider
-            value={[currentTime]}
-            max={duration || 1}
-            step={1}
-            className="flex-1"
-            onValueChange={handleProgressChange}
-          />
-          <span className="w-10 text-xs text-muted-foreground">{formatTime(duration)}</span>
-        </div>
-      </div>
-
-      {/* Volume & Extra */}
-      <div className="flex items-center justify-end w-64 gap-4">
-        <Volume2 className="w-5 h-5 text-muted-foreground" />
-        <Slider
-          value={[volume]}
-          max={100}
-          step={1}
-          className="w-24"
-          onValueChange={handleVolumeChange}
-        />
-        <Button
-          variant="ghost"
-          size="icon"
-          className={`h-8 w-8 ${lyricsWindowVisible ? "text-primary" : ""}`}
-          onClick={toggleLyricsWindow}
-          title={lyricsWindowVisible ? "隐藏桌面歌词" : "显示桌面歌词"}
+    <>
+      <div className="fixed bottom-0 left-0 right-0 flex items-center justify-between h-20 px-6 border-t bg-background border-border">
+        {/* Current Track Info */}
+        <div
+          className="flex items-center w-64 gap-4 cursor-pointer"
+          onClick={() => setDetailModalOpen(true)}
         >
-          <Monitor className="w-4 h-4" />
-        </Button>
+          <AlbumCover
+            cover={currentTrack?.cover}
+            title={currentTrack?.name || "No track"}
+            size="md"
+          />
+          <div className="flex flex-col">
+            <span className="font-medium text-foreground">
+              {currentTrack?.name || "No track selected"}
+            </span>
+            <span className="text-sm text-muted-foreground">
+              {currentTrack
+                ? `${currentTrack.extension.toUpperCase()} • ${formatTime(duration)}`
+                : "—"}
+            </span>
+          </div>
+        </div>
+
+        {/* Playback Controls & Progress */}
+        <div className="flex-1 max-w-2xl">
+          <div className="flex items-center justify-center gap-4 mb-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`h-8 w-8 ${shuffle ? "text-primary" : ""}`}
+              onClick={toggleShuffle}
+            >
+              <Shuffle className="w-4 h-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="w-8 h-8" onClick={prevTrack}>
+              <SkipBack className="w-4 h-4" />
+            </Button>
+            <Button size="icon" className="w-10 h-10 rounded-full" onClick={togglePlay}>
+              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="h-5 w-5 ml-0.5" />}
+            </Button>
+            <Button variant="ghost" size="icon" className="w-8 h-8" onClick={nextTrack}>
+              <SkipForward className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`h-8 w-8 ${repeat !== "off" ? "text-primary" : ""}`}
+              onClick={() => {
+                const modes: Array<"off" | "one" | "all"> = ["off", "one", "all"];
+                const nextIndex = (modes.indexOf(repeat) + 1) % modes.length;
+                setRepeat(modes[nextIndex]);
+              }}
+              title={repeatLabel}
+            >
+              {modeIcon}
+            </Button>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="w-10 text-xs text-right text-muted-foreground">
+              {formatTime(currentTime)}
+            </span>
+            <Slider
+              value={[currentTime]}
+              max={duration || 1}
+              step={1}
+              className="flex-1"
+              onValueChange={handleProgressChange}
+            />
+            <span className="w-10 text-xs text-muted-foreground">{formatTime(duration)}</span>
+          </div>
+        </div>
+
+        {/* Volume & Extra */}
+        <div className="flex items-center justify-end w-64 gap-4">
+          <Volume2 className="w-5 h-5 text-muted-foreground" />
+          <Slider
+            value={[volume]}
+            max={100}
+            step={1}
+            className="w-24"
+            onValueChange={handleVolumeChange}
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`h-8 w-8 ${lyricsWindowVisible ? "text-primary" : ""}`}
+            onClick={toggleLyricsWindow}
+            title={lyricsWindowVisible ? "隐藏桌面歌词" : "显示桌面歌词"}
+          >
+            <Monitor className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
-    </div>
+
+      <TrackDetailModal isOpen={detailModalOpen} onClose={() => setDetailModalOpen(false)} />
+    </>
   );
 }

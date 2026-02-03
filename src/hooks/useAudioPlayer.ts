@@ -114,13 +114,23 @@ export function useAudioPlayer() {
     }
   };
 
-  // Play/pause
+  // Play/pause with state sync
   useEffect(() => {
     if (!audioRef.current) return;
     if (isPlaying) {
       playWithRetry();
+      // 发送播放事件到 LyricsWindow
+      emit("playback-state-changed", {
+        isPlaying: true,
+        currentTime: currentTime,
+      }).catch(err => console.warn("Failed to emit playback-state-changed:", err));
     } else {
       audioRef.current.pause();
+      // 发送暂停事件到 LyricsWindow
+      emit("playback-state-changed", {
+        isPlaying: false,
+        currentTime: currentTime,
+      }).catch(err => console.warn("Failed to emit playback-state-changed:", err));
       // 暂停时清除重试计时器
       if (retryTimeoutRef.current) {
         clearTimeout(retryTimeoutRef.current);
@@ -128,7 +138,7 @@ export function useAudioPlayer() {
       }
       retryCountRef.current = 0;
     }
-  }, [isPlaying]);
+  }, [isPlaying, currentTime]);
 
   // Update source when track changes
   useEffect(() => {
