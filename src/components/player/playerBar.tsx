@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { AlbumCover } from "@/components/player/AlbumCover";
 import { useAudioStore } from "@/stores/audioStore";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { useState, useEffect } from "react";
@@ -96,9 +97,11 @@ export function PlayerBar() {
     <div className="fixed bottom-0 left-0 right-0 flex items-center justify-between h-20 px-6 border-t bg-background border-border">
       {/* Current Track Info */}
       <div className="flex items-center w-64 gap-4">
-        <div className="flex items-center justify-center rounded-md h-14 w-14 bg-muted">
-          <div className="w-10 h-10 rounded bg-primary/20" />
-        </div>
+        <AlbumCover
+          cover={currentTrack?.cover}
+          title={currentTrack?.name || "No track"}
+          size="md"
+        />
         <div className="flex flex-col">
           <span className="font-medium text-foreground">
             {currentTrack?.name || "No track selected"}

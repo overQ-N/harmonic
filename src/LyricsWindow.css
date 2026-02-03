@@ -1,0 +1,8 @@
+        /* 确保根元素背景透明 */
+html, body, #root {
+  background-color: transparent !important; /* 关键 */
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* 防止出现滚动条 */
+  height: 100%;
+}

@@ -1,9 +1,20 @@
 import { useEffect, useRef } from "react";
 import { useAudioStore } from "@/stores/audioStore";
 import { invoke } from "@tauri-apps/api/core";
+import { emit } from "@tauri-apps/api/event";
+
+// 重试配置
+const PLAY_RETRY_CONFIG = {
+  maxRetries: 3,
+  initialDelay: 500, // 初始延时 500ms
+  maxDelay: 3000, // 最大延时 3000ms
+};
 
 export function useAudioPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const retryCountRef = useRef<number>(0);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const {
     currentTrack,
     isPlaying,
@@ -49,6 +60,10 @@ export function useAudioPlayer() {
       audio.removeEventListener("ended", handleEnded);
       audio.removeEventListener("error", handleError);
       audio.pause();
+      // 清除任何待处理的重试计时器
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -59,13 +74,59 @@ export function useAudioPlayer() {
     }
   }, [volume]);
 
+  // 带有重试机制的播放函数
+  const playWithRetry = async () => {
+    if (!audioRef.current) return;
+
+    try {
+      await audioRef.current.play();
+      retryCountRef.current = 0; // 成功播放，重置计数
+    } catch (error) {
+      console.warn(
+        `Play failed (attempt ${retryCountRef.current + 1}/${PLAY_RETRY_CONFIG.maxRetries}):`,
+        error
+      );
+
+      if (retryCountRef.current < PLAY_RETRY_CONFIG.maxRetries) {
+        // 计算延时时间（指数退避）
+        const delay = Math.min(
+          PLAY_RETRY_CONFIG.initialDelay * Math.pow(2, retryCountRef.current),
+          PLAY_RETRY_CONFIG.maxDelay
+        );
+
+        retryCountRef.current++;
+
+        // 清除之前的超时计时器
+        if (retryTimeoutRef.current) {
+          clearTimeout(retryTimeoutRef.current);
+        }
+
+        console.log(`Retrying play after ${delay}ms...`);
+        retryTimeoutRef.current = setTimeout(() => {
+          if (audioRef.current) {
+            playWithRetry();
+          }
+        }, delay);
+      } else {
+        console.error("Play failed after maximum retries");
+        setPlaying(false);
+      }
+    }
+  };
+
   // Play/pause
   useEffect(() => {
     if (!audioRef.current) return;
     if (isPlaying) {
-      audioRef.current.play().catch(console.error);
+      playWithRetry();
     } else {
       audioRef.current.pause();
+      // 暂停时清除重试计时器
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+      retryCountRef.current = 0;
     }
   }, [isPlaying]);
 
@@ -94,9 +155,15 @@ export function useAudioPlayer() {
           // Fallback to direct file path (may not work due to CORS)
           audioRef.current!.src = currentTrack.path;
         }
-        console.log(currentTrack, ";");
+
         audioRef.current!.load();
         setPlaying(true);
+
+        // 向 LyricsWindow 发送歌词加载事件
+        await emit("track-changed", {
+          trackName: currentTrack.name,
+          trackPath: currentTrack.path,
+        });
       } catch (error) {
         console.error("Failed to load audio:", error);
       }
