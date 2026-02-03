@@ -2,6 +2,7 @@ use crate::metadata::extract_audio_metadata;
 use crate::models::AudioFile;
 use std::fs;
 use std::path::Path;
+use tauri::{AppHandle, Manager, WebviewWindow};
 
 /// 列出目录中的所有音频文件
 #[tauri::command]
@@ -117,4 +118,16 @@ fn process_audio_file(file_path: &Path) -> Option<AudioFile> {
         artist,
         album,
     })
+}
+
+// 定义一个命令，用来切换“忽略鼠标事件”的状态
+#[tauri::command]
+pub fn set_ignore_cursor_events(app: AppHandle, label: String, ignore: bool) {
+    // ignore = true  => 鼠标穿透（无法点击窗口）
+    // ignore = false => 鼠标不穿透（可以点击、拖动窗口）
+    if let Some(win) = app.get_webview_window(&label) {
+        win.set_ignore_cursor_events(ignore).unwrap_or_else(|e| {
+            eprintln!("Failed to set ignore cursor events: {}", e);
+        });
+    }
 }

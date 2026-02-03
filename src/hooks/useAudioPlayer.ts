@@ -25,6 +25,10 @@ export function useAudioPlayer() {
     setDuration,
     setPlaying,
     nextTrack,
+    repeat,
+    playlist,
+    currentIndex,
+    selectTrack,
   } = useAudioStore();
 
   // Initialize audio element
@@ -42,6 +46,29 @@ export function useAudioPlayer() {
       setDuration(audio.duration);
     };
     const handleEnded = () => {
+      // Respect repeat and shuffle modes from the store
+      // repeat === 'one' -> restart same track
+      // repeat === 'off' -> stop if at the end of playlist, otherwise go to next
+      // repeat === 'all' -> always go to next (nextTrack wraps)
+      if (repeat === "one") {
+        if (audio) {
+          audio.currentTime = 0;
+          // try to play again
+          playWithRetry().catch(() => {});
+          setCurrentTime(0);
+        }
+        return;
+      }
+
+      // If repeat is off and we're at the last track, stop playback
+      if (repeat === "off") {
+        if (playlist && currentIndex >= 0 && currentIndex === playlist.length - 1) {
+          setPlaying(false);
+          return;
+        }
+      }
+
+      // Otherwise move to next track (shuffle handled inside nextTrack)
       nextTrack();
     };
     const handleError = (e: Event) => {

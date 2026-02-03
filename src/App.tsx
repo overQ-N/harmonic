@@ -1,7 +1,5 @@
-import { useEffect } from "react";
 import { Layout } from "@/components/layout/layout";
 import { PlaylistList } from "@/components/playList/palyList";
-import { LyricsDisplay } from "@/components/player/LyricsDisplay";
 import { Button } from "@/components/ui/button";
 import { FolderOpen, Music } from "lucide-react";
 import { useAudioStore } from "@/stores/audioStore";
@@ -22,18 +20,13 @@ function App() {
         multiple: false,
       });
       if (selected) {
-        const files = await loadDirectory(selected);
-        console.log("files", files);
+        await loadDirectory(selected);
       }
     } catch (error) {
       console.error("Failed to load directory:", error);
       alert("Could not load directory. Please ensure the path exists.");
     }
   };
-
-  useEffect(() => {
-    console.log("palyList", playlist);
-  }, [playlist]);
 
   return (
     <>

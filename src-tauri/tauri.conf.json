@@ -21,16 +21,16 @@
         "title": "Harmonic Lyrics",
         "width": 400,
         "height": 300,
-        "x": 100,
-        "y": 100,
         "decorations": false,
+        "shadow": false,
         "alwaysOnTop": true,
         "transparent": true,
-        "resizable": true,
+        "resizable": false,
         "focus": false,
         "skipTaskbar": true,
         "url": "#/lyrics",
-        "visible": true
+        "visible": false,
+        "minimizable": false
       }
     ],
     "security": {

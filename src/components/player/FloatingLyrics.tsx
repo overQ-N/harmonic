@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useLyrics } from "@/hooks/useLyrics";
 import { findCurrentLineIndex } from "@/lib/lrcParser";
-import { Plus, Minus, X, Settings, Move, Pin, PinOff, Type } from "lucide-react";
+import { Plus, Minus, X, Settings, Move, Pin, PinOff, Type, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { getCurrentWindow, Window } from "@tauri-apps/api/window";
+import { getCurrentWindow, Window, currentMonitor, PhysicalPosition } from "@tauri-apps/api/window";
 import { listen } from "@tauri-apps/api/event";
+import FloatingControl from "./FloatingControl";
+import { cn } from "@/lib/utils";
 
 interface FloatingLyricsProps {
   // 不再需要默认位置和大小，由窗口自身决定
@@ -27,14 +28,31 @@ export function FloatingLyrics(_props: FloatingLyricsProps) {
   const lyricsContainerRef = useRef<HTMLDivElement | null>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 获取歌词窗口实例并初始化状态
   useEffect(() => {
-    const win = getCurrentWindow();
-    if (win) {
-      windowRef.current = win;
-      // 获取当前置顶状态
-      win.isAlwaysOnTop().then(top => setAlwaysOnTop(top));
-    }
+    const initPosition = async () => {
+      const appWindow = getCurrentWindow();
+
+      // 1. 获取当前显示器信息
+      const monitor = await currentMonitor();
+      if (!monitor) return;
+
+      // 2. 获取显示器分辨率 (物理像素)
+      const screenWidth = monitor.size.width;
+
+      // 3. 获取当前窗口大小 (物理像素)
+      // 注意：这里一定要用 outerSize (包含边框，虽然你没有边框) 以防万一
+      const windowSize = await appWindow.outerSize();
+
+      // 4. 计算右下角坐标
+      // 假设我们要留 20px 的边距
+      const margin = 20;
+      const x = screenWidth - windowSize.width - margin;
+      const y = monitor.workArea.size.height - windowSize.height - margin;
+
+      await appWindow.setPosition(new PhysicalPosition(x, y));
+    };
+
+    initPosition();
   }, []);
 
   // 监听主窗口的播放状态和时间更新事件
@@ -113,21 +131,6 @@ export function FloatingLyrics(_props: FloatingLyricsProps) {
           const maxScrollTop = containerScrollHeight - containerHeight;
           targetScrollTop = Math.max(0, Math.min(targetScrollTop, maxScrollTop));
 
-          console.log("Lyrics scroll debug:", {
-            lineTopRelativeToContainer,
-            lineTopRelativeToContent,
-            currentLineHeight,
-            containerHeight,
-            contentHeight,
-            paddingTop,
-            paddingBottom,
-            containerScrollHeight,
-            containerScrollTop,
-            targetScrollTop,
-            maxScrollTop,
-            computedCenter: lineTopRelativeToContent + currentLineHeight / 2,
-            containerCenter: contentHeight / 2,
-          });
           // 平滑滚动
           container.scrollTo({
             top: targetScrollTop,
@@ -173,15 +176,14 @@ export function FloatingLyrics(_props: FloatingLyricsProps) {
   };
 
   return (
-    <div className="flex flex-col h-full border rounded-lg bg-black/80 backdrop-blur-lg border-white/20">
+    <div className="relative flex flex-col h-full">
       {/* 标题栏 - 可拖拽区域 */}
       <div
-        className="flex items-center justify-between px-3 py-2 border-b cursor-move select-none border-white/10"
+        className="flex items-center justify-between px-3 py-2 pr-8 border-b cursor-move select-none border-white/10"
         data-tauri-drag-region
       >
         <div className="flex items-center gap-2 text-sm text-white/70">
           <Move className="w-4 h-4" />
-          <span>桌面歌词</span>
         </div>
         <div className="flex items-center gap-1">
           <Button
@@ -204,6 +206,10 @@ export function FloatingLyrics(_props: FloatingLyricsProps) {
           </Button>
         </div>
       </div>
+
+      <Button variant="ghost" size="icon" className="absolute top-0 right-0 hover:bg-white/20">
+        <Lock className="w-5 h-5" />
+      </Button>
 
       {/* 歌词内容 - 隐藏滚动条但保留滚动功能 */}
       <div
@@ -245,12 +251,18 @@ export function FloatingLyrics(_props: FloatingLyricsProps) {
                 <div
                   key={index}
                   data-lyric-line={index}
-                  className="w-full text-center transition-all duration-200"
+                  className={cn(
+                    "w-full text-center text-transparent transition-all duration-200 ",
+                    {
+                      "bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500": isCurrentLine,
+                    },
+                    !isCurrentLine ? `rgba(167, 139, 250, ${0.6 * opacity})` : ""
+                  )}
                   style={{
                     fontSize: isCurrentLine ? fontSize : fontSize * scale,
                     opacity,
                     fontWeight: isCurrentLine ? "bold" : "normal",
-                    color: isCurrentLine ? "#ffffff" : "rgba(255, 255, 255, 0.5)",
+                    color: isCurrentLine ? "transparent" : `rgba(167, 139, 250, ${0.6 * opacity})`,
                   }}
                 >
                   {line.text}
@@ -260,74 +272,13 @@ export function FloatingLyrics(_props: FloatingLyricsProps) {
           </div>
         )}
       </div>
-
-      {/* 控制栏 */}
-      <div className="flex items-center justify-between gap-2 px-3 py-2 border-t border-white/10">
-        {/* 时间显示 */}
-        <div className="flex items-center gap-2 text-xs text-white/70 min-w-12.5">
-          <span>
-            {Math.floor(syncedTime / 60)}:
-            {Math.floor(syncedTime % 60)
-              .toString()
-              .padStart(2, "0")}
-          </span>
-        </div>
-
-        {/* 显示行数控制 */}
-        {/* <div className="flex items-center gap-1">
-          <span className="text-xs text-white/70 whitespace-nowrap">行数</span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="w-5 h-5 text-white/70 hover:text-white hover:bg-white/20"
-            onClick={() => setDisplayLines(Math.max(1, displayLines - 1))}
-            title="减少"
-          >
-            <Minus className="w-3 h-3" />
-          </Button>
-          <span className="w-5 text-xs text-center text-white/70">{displayLines}</span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="w-5 h-5 text-white/70 hover:text-white hover:bg-white/20"
-            onClick={() => setDisplayLines(Math.min(15, displayLines + 1))}
-            title="增加"
-          >
-            <Plus className="w-3 h-3" />
-          </Button>
-        </div> */}
-
-        {/* 字体大小控制 */}
-        <div className="flex items-center flex-1 gap-1 max-w-30">
-          <Type className="w-4 h-4 shrink-0 text-white/70" />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="w-5 h-5 shrink-0 text-white/70 hover:text-white hover:bg-white/20"
-            onClick={() => setFontSize(Math.max(12, fontSize - 2))}
-            title="缩小"
-          >
-            <Minus className="w-3 h-3" />
-          </Button>
-          <Slider
-            value={[fontSize]}
-            min={12}
-            max={48}
-            step={1}
-            className="flex-1"
-            onValueChange={value => setFontSize(value[0])}
-          />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="w-5 h-5 shrink-0 text-white/70 hover:text-white hover:bg-white/20"
-            onClick={() => setFontSize(Math.min(48, fontSize + 2))}
-            title="放大"
-          >
-            <Plus className="w-3 h-3" />
-          </Button>
-        </div>
-      </div>
+      {/* <FloatingControl
+        fontSize={fontSize}
+        setFontSize={setFontSize}
+        syncedTime={syncedTime}
+        displayLines={displayLines}
+        setDisplayLines={setDisplayLines}
+      /> */}
     </div>
   );
 }

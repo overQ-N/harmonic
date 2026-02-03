@@ -4,7 +4,9 @@ pub mod commands;
 pub mod metadata;
 pub mod models;
 
-use commands::{greet, list_audio_files, read_file_as_base64, read_file_metadata};
+use commands::{
+    greet, list_audio_files, read_file_as_base64, read_file_metadata, set_ignore_cursor_events,
+};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -16,7 +18,8 @@ pub fn run() {
             greet,
             list_audio_files,
             read_file_metadata,
-            read_file_as_base64
+            read_file_as_base64,
+            set_ignore_cursor_events
         ])
         .setup(|_app| {
             // 窗口已在 tauri.conf.json 中定义，无需重复创建

@@ -1,6 +1,6 @@
 import { useAudioStore } from "@/stores/audioStore";
 import { Button } from "@/components/ui/button";
-import { Play, MoreVertical, Clock } from "lucide-react";
+import { Play, MoreVertical, File } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function PlaylistList() {
@@ -22,9 +22,7 @@ export function PlaylistList() {
         <div className="col-span-1">#</div>
         <div className="col-span-6">Title</div>
         <div className="col-span-3">Album</div>
-        <div className="flex justify-center col-span-1">
-          <Clock className="w-4 h-4" />
-        </div>
+        <div className="flex justify-center col-span-1">Size</div>
         <div className="col-span-1"></div>
       </div>
       <div className="divide-y divide-border">

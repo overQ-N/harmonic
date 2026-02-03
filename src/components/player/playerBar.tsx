@@ -9,6 +9,7 @@ import {
   ListVideo,
   Shuffle,
   Monitor,
+  ScreenShareOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -18,6 +19,7 @@ import { useAudioStore } from "@/stores/audioStore";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { useState, useEffect, useMemo } from "react";
 import { Window } from "@tauri-apps/api/window";
+import { invoke } from "@tauri-apps/api/core";
 
 export function PlayerBar() {
   const {
@@ -62,15 +64,17 @@ export function PlayerBar() {
   const toggleLyricsWindow = async () => {
     try {
       const lyricsWindow = await Window.getByLabel("lyrics");
-      console.log(lyricsWindow, "===");
       if (lyricsWindow) {
         const visible = await lyricsWindow.isVisible();
+
         if (visible) {
           await lyricsWindow.hide();
           setLyricsWindowVisible(false);
         } else {
           await lyricsWindow.show();
+          await lyricsWindow.setAlwaysOnTop(true);
           setLyricsWindowVisible(true);
+          await invoke("set_ignore_cursor_events", { label: "lyrics", ignore: false });
         }
       }
     } catch (error) {
@@ -195,11 +199,15 @@ export function PlayerBar() {
           <Button
             variant="ghost"
             size="icon"
-            className={`h-8 w-8 ${lyricsWindowVisible ? "text-primary" : ""}`}
+            className={`h-8 w-8 ${lyricsWindowVisible ? "text-primary bg-accent" : ""}`}
             onClick={toggleLyricsWindow}
             title={lyricsWindowVisible ? "隐藏桌面歌词" : "显示桌面歌词"}
           >
-            <Monitor className="w-4 h-4" />
+            {lyricsWindowVisible ? (
+              <Monitor className="w-4 h-4" />
+            ) : (
+              <ScreenShareOff className="w-4 h-4" />
+            )}
           </Button>
         </div>
       </div>
