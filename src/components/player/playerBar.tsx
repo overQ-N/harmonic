@@ -74,7 +74,7 @@ export function PlayerBar() {
           await lyricsWindow.show();
           await lyricsWindow.setAlwaysOnTop(true);
           setLyricsWindowVisible(true);
-          await invoke("set_ignore_cursor_events", { label: "lyrics", ignore: false });
+          await invoke("set_ignore_cursor_events", { label: "lyrics", ignore: true });
         }
       }
     } catch (error) {
@@ -143,8 +143,9 @@ export function PlayerBar() {
             <Button
               variant="ghost"
               size="icon"
-              className={`h-8 w-8 ${shuffle ? "text-primary" : ""}`}
+              className={`h-8 w-8 ${shuffle ? "text-primary bg-gray-200" : ""}`}
               onClick={toggleShuffle}
+              title="Shuffle"
             >
               <Shuffle className="w-4 h-4" />
             </Button>
@@ -199,7 +200,7 @@ export function PlayerBar() {
           <Button
             variant="ghost"
             size="icon"
-            className={`h-8 w-8 ${lyricsWindowVisible ? "text-primary bg-accent" : ""}`}
+            className={`h-8 w-8 ${lyricsWindowVisible ? "text-primary bg-gray-200" : ""}`}
             onClick={toggleLyricsWindow}
             title={lyricsWindowVisible ? "隐藏桌面歌词" : "显示桌面歌词"}
           >

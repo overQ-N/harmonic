@@ -14,7 +14,7 @@ export function useAudioPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const retryCountRef = useRef<number>(0);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
+  const handleEndedRef = useRef<(e?: Event) => void>(() => {});
   const {
     currentTrack,
     isPlaying,
@@ -31,6 +31,29 @@ export function useAudioPlayer() {
     selectTrack,
   } = useAudioStore();
 
+  useEffect(() => {
+    handleEndedRef.current = () => {
+      // 这里面的 repeat, playlist, currentIndex 都是最新的
+      if (repeat === "one") {
+        if (audioRef.current) {
+          audioRef.current.currentTime = 0;
+          playWithRetry().catch(() => {});
+          setCurrentTime(0);
+        }
+        return;
+      }
+
+      if (repeat === "off") {
+        if (playlist && currentIndex >= 0 && currentIndex === playlist.length - 1) {
+          setPlaying(false);
+          return;
+        }
+      }
+
+      nextTrack();
+    };
+  }, [repeat]);
+
   // Initialize audio element
   useEffect(() => {
     if (!audioRef.current) {
@@ -46,30 +69,7 @@ export function useAudioPlayer() {
       setDuration(audio.duration);
     };
     const handleEnded = () => {
-      // Respect repeat and shuffle modes from the store
-      // repeat === 'one' -> restart same track
-      // repeat === 'off' -> stop if at the end of playlist, otherwise go to next
-      // repeat === 'all' -> always go to next (nextTrack wraps)
-      if (repeat === "one") {
-        if (audio) {
-          audio.currentTime = 0;
-          // try to play again
-          playWithRetry().catch(() => {});
-          setCurrentTime(0);
-        }
-        return;
-      }
-
-      // If repeat is off and we're at the last track, stop playback
-      if (repeat === "off") {
-        if (playlist && currentIndex >= 0 && currentIndex === playlist.length - 1) {
-          setPlaying(false);
-          return;
-        }
-      }
-
-      // Otherwise move to next track (shuffle handled inside nextTrack)
-      nextTrack();
+      if (handleEndedRef.current) handleEndedRef.current();
     };
     const handleError = (e: Event) => {
       console.error("Audio error:", e);

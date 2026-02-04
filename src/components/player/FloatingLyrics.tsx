@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useLyrics } from "@/hooks/useLyrics";
 import { findCurrentLineIndex } from "@/lib/lrcParser";
-import { Plus, Minus, X, Settings, Move, Pin, PinOff, Type, Lock } from "lucide-react";
+import { Plus, Minus, X, Settings, Move, Pin, PinOff, Type, Lock, Unlock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getCurrentWindow, Window, currentMonitor, PhysicalPosition } from "@tauri-apps/api/window";
-import { listen } from "@tauri-apps/api/event";
 import FloatingControl from "./FloatingControl";
 import { cn } from "@/lib/utils";
+import { invoke } from "@tauri-apps/api/core";
+import { listen, emit } from "@tauri-apps/api/event";
 
 interface FloatingLyricsProps {
   // 不再需要默认位置和大小，由窗口自身决定
@@ -14,15 +15,75 @@ interface FloatingLyricsProps {
 
 export function FloatingLyrics(_props: FloatingLyricsProps) {
   const { lyrics, loading, error } = useLyrics();
-  const [fontSize, setFontSize] = useState(24);
+
+  // Defaults must match the main window defaults in settingsStore
+  const DEFAULT_DESKTOP = {
+    fontSize: 24,
+    displayLines: 3,
+    textColor: "#c084fc",
+    lineHeight: 1.5,
+    fontWeight: "normal" as "normal" | "bold",
+  };
+
+  // Use settings received via Tauri events; window is independent so don't read main store directly
+  const [fontSize, setFontSize] = useState(DEFAULT_DESKTOP.fontSize);
+  const [displayLines, setDisplayLines] = useState(DEFAULT_DESKTOP.displayLines);
+  const [textColor, setTextColor] = useState(DEFAULT_DESKTOP.textColor);
+  const [lineHeight, setLineHeight] = useState(DEFAULT_DESKTOP.lineHeight);
+  const [fontWeight, setFontWeight] = useState<typeof DEFAULT_DESKTOP.fontWeight>(
+    DEFAULT_DESKTOP.fontWeight
+  );
   const [alwaysOnTop, setAlwaysOnTop] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(-1);
-  const [displayLines, setDisplayLines] = useState(3); // 上下各显示多少行（默认5行）
   const [isUserScrolling, setIsUserScrolling] = useState(false); // 用户是否正在滚动
+  const [lock, setLock] = useState(false); // 锁定桌面歌词
 
   // 独立的时间状态（用于 LyricsWindow 中的时间同步）
   const [syncedTime, setSyncedTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+
+  // Listen for settings changes from the main window and apply them
+  useEffect(() => {
+    let unlisten: (() => void) | null = null;
+    const setup = async () => {
+      unlisten = await listen("settings-changed", event => {
+        const payload = event.payload as any;
+        if (!payload) return;
+        const d = payload.desktopLyrics || {};
+        if (typeof d.fontSize === "number") setFontSize(d.fontSize);
+        if (typeof d.displayLines === "number") setDisplayLines(d.displayLines);
+        if (typeof d.textColor === "string") setTextColor(d.textColor);
+        if (typeof d.lineHeight === "number") setLineHeight(d.lineHeight);
+        if (d.fontWeight === "normal" || d.fontWeight === "bold") setFontWeight(d.fontWeight);
+      });
+    };
+    setup().catch(err => console.warn("Failed to listen for settings-changed:", err));
+    return () => {
+      if (unlisten) unlisten();
+    };
+  }, []);
+
+  // When user changes settings in this window, emit an event so main window can persist/apply them
+  const handleFontSizeChange = (size: number) => {
+    setFontSize(size);
+    emit("update-settings", { desktopLyrics: { fontSize: size } }).catch(err =>
+      console.warn("Failed to emit update-settings:", err)
+    );
+  };
+
+  const handleDisplayLinesChange = (lines: number) => {
+    setDisplayLines(lines);
+    emit("update-settings", { desktopLyrics: { displayLines: lines } }).catch(err =>
+      console.warn("Failed to emit update-settings:", err)
+    );
+  };
+
+  const handleTextColorChange = (color: string) => {
+    setTextColor(color);
+    emit("update-settings", { desktopLyrics: { textColor: color } }).catch(err =>
+      console.warn("Failed to emit update-settings:", err)
+    );
+  };
 
   const windowRef = useRef<Window | null>(null);
   const lyricsContainerRef = useRef<HTMLDivElement | null>(null);
@@ -175,11 +236,26 @@ export function FloatingLyrics(_props: FloatingLyricsProps) {
     }, 2000);
   };
 
+  // 切换锁定状态
+  const toggleLock = async () => {
+    setLock(!lock);
+  };
+
   return (
-    <div className="relative flex flex-col h-full">
+    <div
+      className={cn("relative flex flex-col h-full", {
+        "pointer-events-none select-none": lock,
+      })}
+    >
       {/* 标题栏 - 可拖拽区域 */}
-      <div
-        className="flex items-center justify-between px-3 py-2 pr-8 border-b cursor-move select-none border-white/10"
+      {/* TODO: 歌词窗口可以设置 */}
+      {/* <div
+        className={cn(
+          "flex items-center justify-between px-3 py-2 pr-8 border-b cursor-move select-none border-white/10",
+          {
+            "pointer-events-none opacity-0": lock,
+          }
+        )}
         data-tauri-drag-region
       >
         <div className="flex items-center gap-2 text-sm text-white/70">
@@ -207,9 +283,14 @@ export function FloatingLyrics(_props: FloatingLyricsProps) {
         </div>
       </div>
 
-      <Button variant="ghost" size="icon" className="absolute top-0 right-0 hover:bg-white/20">
-        <Lock className="w-5 h-5" />
-      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="absolute top-0 right-0 pointer-events-auto hover:bg-white/20"
+        onClick={toggleLock}
+      >
+        {lock ? <Lock className="w-5 h-5" /> : <Unlock className="w-5 h-5" />}
+      </Button> */}
 
       {/* 歌词内容 - 隐藏滚动条但保留滚动功能 */}
       <div
@@ -251,18 +332,12 @@ export function FloatingLyrics(_props: FloatingLyricsProps) {
                 <div
                   key={index}
                   data-lyric-line={index}
-                  className={cn(
-                    "w-full text-center text-transparent transition-all duration-200 ",
-                    {
-                      "bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500": isCurrentLine,
-                    },
-                    !isCurrentLine ? `rgba(167, 139, 250, ${0.6 * opacity})` : ""
-                  )}
+                  className={cn("w-full text-center text-transparent transition-all duration-200 ")}
                   style={{
                     fontSize: isCurrentLine ? fontSize : fontSize * scale,
                     opacity,
-                    fontWeight: isCurrentLine ? "bold" : "normal",
-                    color: isCurrentLine ? "transparent" : `rgba(167, 139, 250, ${0.6 * opacity})`,
+                    fontWeight: isCurrentLine ? fontWeight : "normal",
+                    color: textColor,
                   }}
                 >
                   {line.text}

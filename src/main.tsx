@@ -4,7 +4,7 @@ import App from "./App";
 import LyricsWindow from "./LyricsWindow";
 
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
-console.log(window.location.hash, "===hash===");
+
 if (window.location.hash === "#/lyrics") {
   root.render(
     <React.StrictMode>

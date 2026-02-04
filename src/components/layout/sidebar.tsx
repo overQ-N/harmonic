@@ -1,10 +1,19 @@
-import { Home, Search, Library, Plus, Heart } from "lucide-react";
+import { Home, Search, Library, Plus, Heart, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import React from "react";
 
-const navItems = [
-  { label: "Home", icon: Home },
+type NavItem = {
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  path?: string;
+};
+
+const navItems: NavItem[] = [
+  { label: "Home", icon: Home, path: "/" },
   { label: "Search", icon: Search },
   { label: "Your Library", icon: Library },
+  { label: "Settings", icon: Settings, path: "/settings" },
 ];
 
 const playlistItems = [
@@ -16,8 +25,13 @@ const playlistItems = [
 ];
 
 export function Sidebar() {
+  const navigate = useNavigate();
+
+  const navigateTo = (item: NavItem) => {
+    if (item.path) navigate(item.path);
+  };
   return (
-    <div className="flex flex-col h-full bg-background border-r border-border w-64">
+    <div className="flex flex-col w-64 h-full border-r bg-background border-border">
       <div className="p-6">
         <h1 className="text-2xl font-bold text-foreground">Harmonic</h1>
         <p className="text-sm text-muted-foreground">Your music, your way</p>
@@ -28,9 +42,10 @@ export function Sidebar() {
             <Button
               key={item.label}
               variant="ghost"
-              className="w-full justify-start gap-3 text-foreground hover:bg-accent"
+              className="justify-start w-full gap-3 text-foreground hover:bg-accent"
+              onClick={() => navigateTo(item)}
             >
-              <item.icon className="h-5 w-5" />
+              <item.icon className="w-5 h-5" />
               {item.label}
             </Button>
           ))}
@@ -38,8 +53,8 @@ export function Sidebar() {
         <div className="mt-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-foreground">Playlists</h2>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <Plus className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="w-8 h-8">
+              <Plus className="w-4 h-4" />
             </Button>
           </div>
           <div className="space-y-2">
@@ -47,7 +62,7 @@ export function Sidebar() {
               <Button
                 key={playlist}
                 variant="ghost"
-                className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-accent"
+                className="justify-start w-full text-muted-foreground hover:text-foreground hover:bg-accent"
               >
                 {playlist}
               </Button>
@@ -57,7 +72,7 @@ export function Sidebar() {
       </nav>
       <div className="p-4 border-t border-border">
         <Button variant="outline" className="w-full gap-2">
-          <Heart className="h-4 w-4" />
+          <Heart className="w-4 h-4" />
           Liked Songs
         </Button>
       </div>

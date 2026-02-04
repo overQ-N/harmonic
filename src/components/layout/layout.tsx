@@ -12,7 +12,7 @@ export function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-screen pb-20 bg-background">
       {/* Mobile header */}
       <div className="flex items-center justify-between p-4 border-b lg:hidden border-border">
         <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
