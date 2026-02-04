@@ -5,6 +5,7 @@ export interface DesktopLyricsSettings {
   fontSize: number;
   displayLines: number;
   textColor: string;
+  followTextColor: boolean;
   lineHeight: number;
   fontWeight: "normal" | "bold";
 }
@@ -27,6 +28,7 @@ const DEFAULT_SETTINGS: AppSettings = {
     fontSize: 24,
     displayLines: 3,
     textColor: "#c084fc", // 亮紫色
+    followTextColor: true,
     lineHeight: 1.5,
     fontWeight: "normal",
   },

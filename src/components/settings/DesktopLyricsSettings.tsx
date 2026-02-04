@@ -10,7 +10,7 @@ export function DesktopLyricsSettings() {
   const [colorInput, setColorInput] = useState(desktopLyrics.textColor);
 
   return (
-    <div className="space-y-6 p-6 bg-white rounded-lg border border-gray-200">
+    <div className="p-6 space-y-6 bg-white border border-gray-200 rounded-lg">
       <h3 className="text-lg font-semibold text-foreground">桌面歌词设置</h3>
 
       {/* 字体大小 */}
@@ -26,7 +26,7 @@ export function DesktopLyricsSettings() {
           <Button
             variant="ghost"
             size="icon"
-            className="w-8 h-8 flex-shrink-0 text-muted-foreground hover:text-foreground hover:bg-gray-100"
+            className="flex-shrink-0 w-8 h-8 text-muted-foreground hover:text-foreground hover:bg-gray-100"
             onClick={() =>
               updateDesktopLyricsSettings({
                 fontSize: Math.max(12, desktopLyrics.fontSize - 2),
@@ -46,7 +46,7 @@ export function DesktopLyricsSettings() {
           <Button
             variant="ghost"
             size="icon"
-            className="w-8 h-8 flex-shrink-0 text-muted-foreground hover:text-foreground hover:bg-gray-100"
+            className="flex-shrink-0 w-8 h-8 text-muted-foreground hover:text-foreground hover:bg-gray-100"
             onClick={() =>
               updateDesktopLyricsSettings({
                 fontSize: Math.min(48, desktopLyrics.fontSize + 2),
@@ -68,7 +68,7 @@ export function DesktopLyricsSettings() {
           <Button
             variant="ghost"
             size="icon"
-            className="w-8 h-8 flex-shrink-0 text-muted-foreground hover:text-foreground hover:bg-gray-100"
+            className="flex-shrink-0 w-8 h-8 text-muted-foreground hover:text-foreground hover:bg-gray-100"
             onClick={() =>
               updateDesktopLyricsSettings({
                 displayLines: Math.max(1, desktopLyrics.displayLines - 1),
@@ -88,7 +88,7 @@ export function DesktopLyricsSettings() {
           <Button
             variant="ghost"
             size="icon"
-            className="w-8 h-8 flex-shrink-0 text-muted-foreground hover:text-foreground hover:bg-gray-100"
+            className="flex-shrink-0 w-8 h-8 text-muted-foreground hover:text-foreground hover:bg-gray-100"
             onClick={() =>
               updateDesktopLyricsSettings({
                 displayLines: Math.min(15, desktopLyrics.displayLines + 1),
@@ -129,7 +129,7 @@ export function DesktopLyricsSettings() {
               setColorInput(e.target.value);
               updateDesktopLyricsSettings({ textColor: e.target.value });
             }}
-            className="w-12 h-10 rounded cursor-pointer border border-gray-200"
+            className="w-12 h-10 border border-gray-200 rounded cursor-pointer"
           />
           <input
             type="text"
@@ -141,14 +141,14 @@ export function DesktopLyricsSettings() {
               }
             }}
             placeholder="#c084fc"
-            className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded text-foreground text-sm placeholder-muted-foreground focus:outline-none focus:border-primary"
+            className="flex-1 px-3 py-2 text-sm bg-white border border-gray-200 rounded text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary"
           />
         </div>
       </div>
 
       {/* 字体粗细 */}
       <div className="space-y-2">
-        <label className="text-sm text-white/70">字体粗细</label>
+        <label className="text-sm text-muted-foreground">字体粗细</label>
         <div className="flex gap-2">
           {(["normal", "bold"] as const).map(weight => (
             <Button
@@ -163,11 +163,26 @@ export function DesktopLyricsSettings() {
         </div>
       </div>
 
+      <div className="space-y-2">
+        <label className="text-sm text-muted-foreground">前后行颜色</label>
+        <div className="flex items-center gap-3">
+          <span className="text-sm">跟随当前行</span>
+          <input
+            type="checkbox"
+            checked={desktopLyrics.followTextColor}
+            onChange={e => {
+              updateDesktopLyricsSettings({ followTextColor: e.target.checked });
+            }}
+            className="w-4 h-4 border border-gray-200 rounded cursor-pointer"
+          />
+        </div>
+      </div>
+
       {/* 预览 */}
-      <div className="mt-8 pt-6 border-t border-gray-200">
-        <p className="text-xs text-muted-foreground mb-2">预览</p>
+      <div className="pt-6 mt-8 border-t border-gray-200">
+        <p className="mb-2 text-xs text-muted-foreground">预览</p>
         <div
-          className="text-center p-4 rounded bg-gray-50 border border-gray-100"
+          className="p-4 text-center border border-gray-100 rounded bg-gray-50"
           style={{
             fontSize: `${desktopLyrics.fontSize}px`,
             color: desktopLyrics.textColor,
@@ -176,9 +191,22 @@ export function DesktopLyricsSettings() {
           }}
         >
           <div>这是当前行</div>
-          <div style={{ opacity: 0.6, fontSize: `${desktopLyrics.fontSize * 0.85}px` }}>
-            这是前后行
-          </div>
+          {desktopLyrics.followTextColor ? (
+            <div style={{ opacity: 0.6, fontSize: `${desktopLyrics.fontSize * 0.85}px` }}>
+              这是前后行
+            </div>
+          ) : (
+            <div
+              className="text-white drop-shadow-2xl"
+              style={{
+                opacity: 0.6,
+                fontSize: `${desktopLyrics.fontSize * 0.85}px`,
+                textShadow: "0 1px 2px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.25)",
+              }}
+            >
+              这是前后行
+            </div>
+          )}
         </div>
       </div>
     </div>

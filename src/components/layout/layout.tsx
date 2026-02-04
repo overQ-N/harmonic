@@ -22,13 +22,14 @@ export function Layout({ children }: LayoutProps) {
         <div className="w-10" /> {/* spacer */}
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 h-[calc(100%-80px)]">
         {/* Sidebar for desktop, toggleable for mobile */}
         <div
           className={`
+            scrollbar-hide
             ${sidebarOpen ? "absolute inset-0 z-50" : "hidden"}
             lg:relative lg:flex lg:z-0
-            w-64 shrink-0 border-r border-border bg-background
+            w-64 shrink-0 border-r border-border bg-background overflow-x-hidden overflow-y-auto
           `}
         >
           <Sidebar />

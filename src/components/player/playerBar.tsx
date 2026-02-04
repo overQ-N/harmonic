@@ -97,9 +97,8 @@ export function PlayerBar() {
     setVolume(value[0]);
   };
 
-  const repeatMode = repeat === "off" ? "off" : repeat === "one" ? "one" : "all";
-  const repeatLabel =
-    repeatMode === "off" ? "Repeat off" : repeatMode === "one" ? "Repeat one" : "Repeat all";
+  const repeatMode = repeat === "all" ? "all" : "one";
+  const repeatLabel = repeatMode === "one" ? "单曲循环" : "列表循环";
 
   const modeIcon = useMemo(() => {
     switch (repeat) {
@@ -161,9 +160,9 @@ export function PlayerBar() {
             <Button
               variant="ghost"
               size="icon"
-              className={`h-8 w-8 ${repeat !== "off" ? "text-primary" : ""}`}
+              className={`h-8 w-8 `}
               onClick={() => {
-                const modes: Array<"off" | "one" | "all"> = ["off", "one", "all"];
+                const modes: Array<"one" | "all"> = ["one", "all"];
                 const nextIndex = (modes.indexOf(repeat) + 1) % modes.length;
                 setRepeat(modes[nextIndex]);
               }}

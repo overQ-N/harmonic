@@ -19,7 +19,7 @@ interface AudioState {
   duration: number;
   volume: number;
   shuffle: boolean;
-  repeat: "off" | "one" | "all";
+  repeat: "one" | "all";
   // Playlist
   playlist: AudioFile[];
   currentIndex: number;
@@ -31,7 +31,7 @@ interface AudioState {
   setDuration: (duration: number) => void;
   setVolume: (volume: number) => void;
   toggleShuffle: () => void;
-  setRepeat: (mode: "off" | "one" | "all") => void;
+  setRepeat: (mode: "one" | "all") => void;
   setPlaylist: (files: AudioFile[]) => void;
   nextTrack: () => void;
   prevTrack: () => void;
@@ -47,7 +47,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
   duration: 0,
   volume: 80,
   shuffle: false,
-  repeat: "off",
+  repeat: "all",
   playlist: [],
   currentIndex: -1,
 
@@ -95,6 +95,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
   loadDirectory: async (path: string) => {
     try {
       const files: AudioFile[] = await invoke("list_audio_files", { path });
+      console.log("files", files);
       set({ playlist: files });
       if (files.length > 0) {
         set({ currentIndex: 0, currentTrack: files[0] });

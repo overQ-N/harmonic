@@ -52,7 +52,7 @@ pub async fn read_file_metadata(path: String) -> Result<AudioFile, String> {
         .unwrap_or("")
         .to_lowercase();
 
-    let (cover, artist, album) = extract_audio_metadata(file_path, &extension);
+    let (cover, artist, album, lyrics) = extract_audio_metadata(file_path, &extension);
 
     Ok(AudioFile {
         path,
@@ -62,6 +62,7 @@ pub async fn read_file_metadata(path: String) -> Result<AudioFile, String> {
         cover,
         artist,
         album,
+        lyrics,
     })
 }
 
@@ -107,7 +108,7 @@ fn process_audio_file(file_path: &Path) -> Option<AudioFile> {
         .unwrap_or("")
         .to_string();
 
-    let (cover, artist, album) = extract_audio_metadata(file_path, &extension);
+    let (cover, artist, album, lyrics) = extract_audio_metadata(file_path, &extension);
 
     Some(AudioFile {
         path: file_path.to_string_lossy().to_string(),
@@ -117,6 +118,7 @@ fn process_audio_file(file_path: &Path) -> Option<AudioFile> {
         cover,
         artist,
         album,
+        lyrics,
     })
 }
 

@@ -1,28 +1,34 @@
 use base64::Engine;
 use std::path::Path;
 
-/// 提取音频文件的元数据（专辑封面、艺术家、专辑名称）
+/// 提取音频文件的元数据（专辑封面、艺术家、专辑名称、歌词）
 pub fn extract_audio_metadata(
     file_path: &Path,
     extension: &str,
-) -> (Option<String>, Option<String>, Option<String>) {
+) -> (
+    Option<String>,
+    Option<String>,
+    Option<String>,
+    Option<String>,
+) {
     let mut cover = None;
     let mut artist = None;
     let mut album = None;
+    let mut lyrics = None;
 
     match extension {
         "mp3" => {
-            extract_mp3_metadata(file_path, &mut cover, &mut artist, &mut album);
+            extract_mp3_metadata(file_path, &mut cover, &mut artist, &mut album, &mut lyrics);
         }
         "flac" => {
-            extract_flac_metadata(file_path, &mut cover, &mut artist, &mut album);
+            extract_flac_metadata(file_path, &mut cover, &mut artist, &mut album, &mut lyrics);
         }
         _ => {
             // 其他格式暂不支持元数据提取
         }
     }
 
-    (cover, artist, album)
+    (cover, artist, album, lyrics)
 }
 
 /// 从MP3文件提取元数据
@@ -31,6 +37,7 @@ fn extract_mp3_metadata(
     cover: &mut Option<String>,
     artist: &mut Option<String>,
     album: &mut Option<String>,
+    lyrics: &mut Option<String>,
 ) {
     use id3::TagLike;
 
@@ -43,6 +50,14 @@ fn extract_mp3_metadata(
                 *cover = Some(encoded);
             }
         }
+
+        // 尝试从ID3标签的TXXX帧中提取歌词（TXXX:LYRICS或TXXX:UNSYNCEDLYRICS）
+        if let Some(frame) = tag.extended_texts().find(|f| {
+            f.description.eq_ignore_ascii_case("lyrics")
+                || f.description.eq_ignore_ascii_case("unsyncedlyrics")
+        }) {
+            *lyrics = Some(frame.value.to_string());
+        }
     }
 }
 
@@ -52,6 +67,7 @@ fn extract_flac_metadata(
     cover: &mut Option<String>,
     artist: &mut Option<String>,
     album: &mut Option<String>,
+    lyrics: &mut Option<String>,
 ) {
     if let Ok(metaflac) = metaflac::Tag::read_from_path(file_path) {
         if let Some(vorbis) = metaflac.vorbis_comments() {
@@ -62,6 +78,12 @@ fn extract_flac_metadata(
             *album = vorbis
                 .album()
                 .and_then(|a| a.iter().next())
+                .map(|s| s.to_string());
+
+            // 提取歌词：Vorbis Comments标准支持LYRICS字段
+            *lyrics = vorbis
+                .lyrics()
+                .and_then(|l| l.iter().next())
                 .map(|s| s.to_string());
         }
 

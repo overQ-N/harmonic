@@ -43,13 +43,6 @@ export function useAudioPlayer() {
         return;
       }
 
-      if (repeat === "off") {
-        if (playlist && currentIndex >= 0 && currentIndex === playlist.length - 1) {
-          setPlaying(false);
-          return;
-        }
-      }
-
       nextTrack();
     };
   }, [repeat]);

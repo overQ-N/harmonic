@@ -22,6 +22,7 @@ export function FloatingLyrics(_props: FloatingLyricsProps) {
     displayLines: 3,
     textColor: "#c084fc",
     lineHeight: 1.5,
+    followTextColor: true,
     fontWeight: "normal" as "normal" | "bold",
   };
 
@@ -29,6 +30,7 @@ export function FloatingLyrics(_props: FloatingLyricsProps) {
   const [fontSize, setFontSize] = useState(DEFAULT_DESKTOP.fontSize);
   const [displayLines, setDisplayLines] = useState(DEFAULT_DESKTOP.displayLines);
   const [textColor, setTextColor] = useState(DEFAULT_DESKTOP.textColor);
+  const [followTextColor, setFollowTextColor] = useState(DEFAULT_DESKTOP.followTextColor);
   const [lineHeight, setLineHeight] = useState(DEFAULT_DESKTOP.lineHeight);
   const [fontWeight, setFontWeight] = useState<typeof DEFAULT_DESKTOP.fontWeight>(
     DEFAULT_DESKTOP.fontWeight
@@ -53,6 +55,7 @@ export function FloatingLyrics(_props: FloatingLyricsProps) {
         if (typeof d.fontSize === "number") setFontSize(d.fontSize);
         if (typeof d.displayLines === "number") setDisplayLines(d.displayLines);
         if (typeof d.textColor === "string") setTextColor(d.textColor);
+        if (typeof d.followTextColor === "boolean") setFollowTextColor(d.followTextColor);
         if (typeof d.lineHeight === "number") setLineHeight(d.lineHeight);
         if (d.fontWeight === "normal" || d.fontWeight === "bold") setFontWeight(d.fontWeight);
       });
@@ -294,7 +297,7 @@ export function FloatingLyrics(_props: FloatingLyricsProps) {
 
       {/* 歌词内容 - 隐藏滚动条但保留滚动功能 */}
       <div
-        className="flex flex-col flex-1 p-4 overflow-y-scroll scrollbar-hide"
+        className="flex flex-col flex-1 p-4 overflow-y-scroll font-mono scrollbar-hide"
         ref={lyricsContainerRef}
         onScroll={handleScroll}
         style={
@@ -332,12 +335,17 @@ export function FloatingLyrics(_props: FloatingLyricsProps) {
                 <div
                   key={index}
                   data-lyric-line={index}
-                  className={cn("w-full text-center text-transparent transition-all duration-200 ")}
+                  className={cn("w-full text-center text-accent transition-all duration-200", {
+                    "drop-shadow-2xl": !followTextColor,
+                  })}
                   style={{
                     fontSize: isCurrentLine ? fontSize : fontSize * scale,
                     opacity,
                     fontWeight: isCurrentLine ? fontWeight : "normal",
-                    color: textColor,
+                    color: isCurrentLine || followTextColor ? textColor : "#fff",
+                    textShadow: followTextColor
+                      ? "0 1px 2px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.25)"
+                      : "none",
                   }}
                 >
                   {line.text}

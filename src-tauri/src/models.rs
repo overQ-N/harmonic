@@ -14,6 +14,9 @@ pub struct AudioFile {
     pub artist: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub album: Option<String>,
+    /// 内嵌歌词
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub lyrics: Option<String>,
 }
 
 impl AudioFile {
