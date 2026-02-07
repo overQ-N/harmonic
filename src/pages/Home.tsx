@@ -33,7 +33,7 @@ export default function Home() {
             <h1 className="text-3xl font-bold text-foreground">Your Library</h1>
             <p className="text-muted-foreground">
               {playlist.length} tracks ·{" "}
-              {Math.round(playlist.reduce((acc, t) => acc + t.size, 0) / 1024 / 1024)} MB
+              {/* {Math.round(playlist.reduce((acc, t) => acc + t.size, 0) / 1024 / 1024)} MB */}
             </p>
           </div>
           <Button className="gap-2" onClick={handleOpenFolder}>

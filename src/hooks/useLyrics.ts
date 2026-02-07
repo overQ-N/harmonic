@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { readTextFile } from "@tauri-apps/plugin-fs";
-import { useAudioStore } from "@/stores/audioStore";
+import { AudioTrack, useAudioStore } from "@/stores/audioStore";
 import { parseLRC, LyricLine } from "@/lib/lrcParser";
 import { listen } from "@tauri-apps/api/event";
 
@@ -11,7 +11,20 @@ export function useLyrics() {
   const [error, setError] = useState<string | null>(null);
 
   // 加载歌词的核心逻辑
-  const loadLyricsForTrack = async (trackPath: string) => {
+  const loadLyricsForTrack = async (track: AudioTrack) => {
+    if (track.source === "kw") {
+      try {
+        const resp = await fetch(track.lrc);
+        const parsed = await resp.json();
+        if (parsed.code === 200) {
+          setLyrics(parseLRC(parsed.data.lrclist));
+        }
+      } catch (error) {
+        console.log(`Lyrics loaded for: ${track.lrc}`);
+      }
+      return;
+    }
+    const trackPath = track.path;
     if (!trackPath) {
       setLyrics([]);
       return;
@@ -39,7 +52,7 @@ export function useLyrics() {
   // 监听 currentTrack 变化（主窗口）
   useEffect(() => {
     if (currentTrack) {
-      loadLyricsForTrack(currentTrack.path);
+      loadLyricsForTrack(currentTrack);
     }
   }, [currentTrack]);
 
@@ -48,9 +61,9 @@ export function useLyrics() {
     let unlisten: (() => void) | null = null;
 
     const setupListener = async () => {
-      unlisten = await listen<{ trackPath: string }>("track-changed", event => {
+      unlisten = await listen<AudioTrack>("track-changed", event => {
         console.log("Received track-changed event:", event.payload);
-        loadLyricsForTrack(event.payload.trackPath);
+        loadLyricsForTrack(event.payload);
       });
     };
 

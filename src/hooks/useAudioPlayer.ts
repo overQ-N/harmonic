@@ -168,32 +168,33 @@ export function useAudioPlayer() {
         // Use Tauri's asset protocol to serve local file
         // For simplicity, we'll use a blob URL via base64
         setPlaying(false);
-        const data = await invoke<string>("read_file_as_base64", {
-          path: currentTrack.path,
-        });
-        if (data) {
-          const byteCharacters = atob(data);
-          const byteNumbers = new Array(byteCharacters.length);
-          for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-          }
-          const byteArray = new Uint8Array(byteNumbers);
-          const blob = new Blob([byteArray], { type: "audio/mpeg" });
-          const url = URL.createObjectURL(blob);
-          audioRef.current!.src = url;
+        if (currentTrack.source === "kw") {
+          audioRef.current!.src = currentTrack.url;
         } else {
-          // Fallback to direct file path (may not work due to CORS)
-          audioRef.current!.src = currentTrack.path;
+          const data = await invoke<string>("read_file_as_base64", {
+            path: currentTrack.path,
+          });
+          if (data) {
+            const byteCharacters = atob(data);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: "audio/mpeg" });
+            const url = URL.createObjectURL(blob);
+            audioRef.current!.src = url;
+          } else {
+            // Fallback to direct file path (may not work due to CORS)
+            audioRef.current!.src = currentTrack.path;
+          }
         }
 
         audioRef.current!.load();
         setPlaying(true);
 
         // 向 LyricsWindow 发送歌词加载事件
-        await emit("track-changed", {
-          trackName: currentTrack.name,
-          trackPath: currentTrack.path,
-        });
+        await emit("track-changed", currentTrack);
       } catch (error) {
         console.error("Failed to load audio:", error);
       }

@@ -1,19 +1,31 @@
 import { create } from "zustand";
 import { invoke } from "@tauri-apps/api/core";
 
-export interface AudioFile {
-  path: string;
+export interface BaseAudio {
   name: string;
-  size: number;
-  extension: string;
   cover?: string; // Base64编码的封面图片
   artist?: string;
   album?: string;
 }
 
+export interface LocalAudio extends BaseAudio {
+  source: "local";
+  path: string;
+  size: number;
+  extension: string;
+}
+
+export interface KwAudio extends BaseAudio {
+  source: "kw";
+  url: string;
+  lrc: string;
+}
+
+export type AudioTrack = LocalAudio | KwAudio;
+
 interface AudioState {
   // Playback
-  currentTrack: AudioFile | null;
+  currentTrack: AudioTrack | null;
   isPlaying: boolean;
   currentTime: number;
   duration: number;
@@ -21,10 +33,10 @@ interface AudioState {
   shuffle: boolean;
   repeat: "one" | "all";
   // Playlist
-  playlist: AudioFile[];
+  playlist: AudioTrack[];
   currentIndex: number;
   // Actions
-  setCurrentTrack: (track: AudioFile) => void;
+  setCurrentTrack: (track: AudioTrack) => void;
   togglePlay: () => void;
   setPlaying: (playing: boolean) => void;
   setCurrentTime: (time: number) => void;
@@ -32,7 +44,7 @@ interface AudioState {
   setVolume: (volume: number) => void;
   toggleShuffle: () => void;
   setRepeat: (mode: "one" | "all") => void;
-  setPlaylist: (files: AudioFile[]) => void;
+  setPlaylist: (files: AudioTrack[]) => void;
   nextTrack: () => void;
   prevTrack: () => void;
   selectTrack: (index: number) => void;
@@ -94,7 +106,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
 
   loadDirectory: async (path: string) => {
     try {
-      const files: AudioFile[] = await invoke("list_audio_files", { path });
+      const files: AudioTrack[] = await invoke("list_audio_files", { path });
       console.log("files", files);
       set({ playlist: files });
       if (files.length > 0) {

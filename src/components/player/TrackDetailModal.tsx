@@ -68,7 +68,8 @@ export function TrackDetailModal({ isOpen, onClose }: TrackDetailModalProps) {
               <h2 className="mb-2 text-2xl font-bold text-white truncate">{currentTrack.name}</h2>
 
               <p className="mb-4 text-sm text-white/60">
-                {currentTrack.extension.toUpperCase()} • {formatTime(duration)}
+                {currentTrack.source === "local" && currentTrack?.extension?.toUpperCase()} •{" "}
+                {formatTime(duration)}
               </p>
 
               {/* 进度条 */}

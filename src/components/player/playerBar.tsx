@@ -129,7 +129,7 @@ export function PlayerBar() {
               {currentTrack?.name || "No track selected"}
             </span>
             <span className="text-sm text-muted-foreground">
-              {currentTrack
+              {currentTrack?.source === "local" && currentTrack?.extension
                 ? `${currentTrack.extension.toUpperCase()} • ${formatTime(duration)}`
                 : "—"}
             </span>
@@ -144,7 +144,7 @@ export function PlayerBar() {
               size="icon"
               className={`h-8 w-8 ${shuffle ? "text-primary bg-gray-200" : ""}`}
               onClick={toggleShuffle}
-              title="Shuffle"
+              title="随机播放"
             >
               <Shuffle className="w-4 h-4" />
             </Button>

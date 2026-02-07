@@ -27,7 +27,8 @@
     "react-router-dom": "6.14.1",
     "tailwind-merge": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",
-    "zustand": "^5.0.10"
+    "zustand": "^5.0.10",
+    "@tanstack/react-table": "^8.8.2"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
