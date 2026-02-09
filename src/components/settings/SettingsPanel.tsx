@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { X, Music, Palette, Volume2 } from "lucide-react";
+import { X, Music, Palette, Volume2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DesktopLyricsSettings } from "./DesktopLyricsSettings";
+import { DownloadSettings } from "./DownloadSettings";
 
-type SettingTab = "lyrics" | "display" | "audio";
+type SettingTab = "lyrics" | "display" | "audio" | "download";
 
 interface SettingsPanelProps {
   onClose: () => void;
@@ -16,6 +17,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
     { id: "lyrics", label: "桌面歌词", icon: <Music className="w-4 h-4" /> },
     { id: "display", label: "显示", icon: <Palette className="w-4 h-4" /> },
     { id: "audio", label: "音频", icon: <Volume2 className="w-4 h-4" /> },
+    { id: "download", label: "下载", icon: <Download className="w-4 h-4" /> },
   ];
 
   return (
@@ -52,22 +54,24 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 p-6 overflow-y-auto">
         {activeTab === "lyrics" && <DesktopLyricsSettings />}
 
         {activeTab === "display" && (
-          <div className="space-y-6 p-6 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="p-6 space-y-6 border border-gray-200 rounded-lg bg-gray-50">
             <h3 className="text-lg font-semibold text-foreground">显示设置</h3>
             <p className="text-sm text-muted-foreground">更多显示设置敬请期待...</p>
           </div>
         )}
 
         {activeTab === "audio" && (
-          <div className="space-y-6 p-6 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="p-6 space-y-6 border border-gray-200 rounded-lg bg-gray-50">
             <h3 className="text-lg font-semibold text-foreground">音频设置</h3>
             <p className="text-sm text-muted-foreground">更多音频设置敬请期待...</p>
           </div>
         )}
+
+        {activeTab === "download" && <DownloadSettings />}
       </div>
     </div>
   );

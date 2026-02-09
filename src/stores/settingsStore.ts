@@ -13,12 +13,15 @@ export interface DesktopLyricsSettings {
 export interface AppSettings {
   // Desktop Lyrics
   desktopLyrics: DesktopLyricsSettings;
+  // Download settings
+  downloadDirectory: string;
   // Future: Audio settings, Display settings, etc.
 }
 
 interface SettingsState {
   settings: AppSettings;
   updateDesktopLyricsSettings: (updates: Partial<DesktopLyricsSettings>) => void;
+  updateDownloadDirectory: (directory: string) => void;
   loadSettingsFromStorage: () => void;
   saveSettingsToStorage: () => void;
 }
@@ -32,6 +35,7 @@ const DEFAULT_SETTINGS: AppSettings = {
     lineHeight: 1.5,
     fontWeight: "normal",
   },
+  downloadDirectory: "",
 };
 
 const STORAGE_KEY = "harmonic_settings";
@@ -53,6 +57,22 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     setTimeout(() => get().saveSettingsToStorage(), 0);
     // Emit settings change so other windows (e.g., lyrics window) can sync
     const payload = { desktopLyrics: { ...get().settings.desktopLyrics } };
+    emit("settings-changed", payload).catch(err =>
+      console.warn("Failed to emit settings-changed:", err)
+    );
+  },
+
+  updateDownloadDirectory: (directory: string) => {
+    set(state => ({
+      settings: {
+        ...state.settings,
+        downloadDirectory: directory,
+      },
+    }));
+    // Auto-save to localStorage after update
+    setTimeout(() => get().saveSettingsToStorage(), 0);
+    // Emit settings change for other components if needed
+    const payload = { downloadDirectory: directory };
     emit("settings-changed", payload).catch(err =>
       console.warn("Failed to emit settings-changed:", err)
     );

@@ -59,6 +59,7 @@ export function useAudioPlayer() {
       setCurrentTime(audio.currentTime);
     };
     const handleLoadedMetadata = () => {
+      console.log("loaded===", audio.duration);
       setDuration(audio.duration);
     };
     const handleEnded = () => {

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { useAudioStore } from "@/stores/audioStore";
 import { LyricsDisplay } from "./LyricsDisplay";
+import { AlbumCover } from "./AlbumCover";
 
 interface TrackDetailModalProps {
   isOpen: boolean;
@@ -44,17 +45,11 @@ export function TrackDetailModal({ isOpen, onClose }: TrackDetailModalProps) {
           <div className="flex flex-col items-center justify-center w-1/3 p-8 border-r border-white/10 bg-gradient-to-b from-slate-800/50 to-slate-900/50">
             {/* 专辑封面 */}
             <div className="relative w-48 h-48 mb-6 overflow-hidden shadow-2xl rounded-xl">
-              {currentTrack.cover ? (
-                <img
-                  src={`data:image/jpeg;base64,${currentTrack.cover}`}
-                  alt={currentTrack.name}
-                  className="object-cover w-full h-full"
-                />
-              ) : (
-                <div className="flex items-center justify-center w-full h-full bg-gradient-to-br from-purple-500 to-pink-500">
-                  <div className="text-6xl text-white">♫</div>
-                </div>
-              )}
+              <AlbumCover
+                cover={currentTrack?.cover}
+                title={currentTrack?.name || "No track"}
+                size="xl"
+              />
               {/* 播放指示器 */}
               {isPlaying && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/20">

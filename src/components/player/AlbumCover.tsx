@@ -25,12 +25,12 @@ export function AlbumCover({ cover, title, className, size = "md" }: AlbumCoverP
     >
       {cover ? (
         <img
-          src={`data:image/jpeg;base64,${cover}`}
+          src={cover.startsWith("http") ? cover : `data:image/jpeg;base64,${cover}`}
           alt={title}
-          className="w-full h-full object-cover"
+          className="object-cover w-full h-full"
         />
       ) : (
-        <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+        <div className="flex items-center justify-center w-full h-full bg-gradient-to-br from-primary/20 to-primary/10">
           <span className="text-2xl">♪</span>
         </div>
       )}
